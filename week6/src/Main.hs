@@ -89,18 +89,19 @@ instantiate (Scheme vars t) =
          let s = Map.fromList (zip vars nvars)
          return $ apply s t
 
-mgu :: Type -> Type -> TI Subst
+mgu :: Type -> Type -> TI (Either String Subst)
 mgu (TFun l r) (TFun l' r')  
-   =  do  s1 <- mgu l l'
+   =  do  
+          s1 <- (mgu l l')
           s2 <- mgu (apply s1 r) (apply s1 r')
-          return (s1 `composeSubst` s2)
+          return Right (s1 `composeSubst` s2)
 
-mgu (TVar u) t               =  varBind u t
-mgu t (TVar u)               =  varBind u t
+mgu (TVar u) t               =  Right varBind u t
+mgu t (TVar u)               =  Right varBind u t
 
-mgu TInt TInt                =  return nullSubst
-mgu TBool TBool              =  return nullSubst
-mgu t1 t2                    =  error $ "types do not unify: " ++ show t1 ++ 
+mgu TInt TInt                =  return Right nullSubst
+mgu TBool TBool              =  return Right nullSubst
+mgu t1 t2                    =  Left $ "types do not unify: " ++ show t1 ++ 
                                 " vs. " ++ show t2
 
 varBind :: String -> Type -> TI Subst
